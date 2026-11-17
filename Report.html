@@ -1,0 +1,249 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report Garbage | TEAM TECH ROOT</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #f1f7f2;
+      color: #243b2d;
+      padding: 20px 12px;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 20px auto;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px #00000012;
+    }
+
+    header {
+      background: #155d35;
+      color: white;
+      text-align: center;
+      padding: 22px 12px;
+    }
+
+    header h1 {
+      font-size: 24px;
+    }
+
+    header p {
+      font-size: 13px;
+      margin-top: 5px;
+    }
+
+    .content {
+      padding: 22px;
+    }
+
+    .bin-box {
+      background: #e3f4e7;
+      border: 1px solid #b7dfc0;
+      border-radius: 10px;
+      padding: 18px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .bin-icon {
+      font-size: 40px;
+    }
+
+    .bin-box h2 {
+      color: #155d35;
+      margin: 7px 0;
+    }
+
+    .bin-box p {
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin: 16px 0 7px;
+    }
+
+    select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccd8ce;
+      border-radius: 7px;
+      font-size: 15px;
+      background: white;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 22px;
+      border: none;
+      border-radius: 7px;
+      background: #188348;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background: #89978d;
+    }
+
+    .message {
+      display: none;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 7px;
+      font-size: 14px;
+    }
+
+    .error {
+      background: #ffeded;
+      color: #a32222;
+    }
+
+    .note {
+      margin-top: 15px;
+      text-align: center;
+      color: #68776c;
+      font-size: 12px;
+    }
+
+    .back {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      color: #155d35;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      color: #65766a;
+      font-size: 12px;
+      padding: 15px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <header>
+      <h1>TEAM TECH ROOT</h1>
+      <p>QR-Based Garbage Reporting System</p>
+    </header>
+
+    <div class="content">
+
+      <div class="bin-box">
+        <div class="bin-icon">🗑️</div>
+        <h2>Report a Problem</h2>
+        <p>Dustbin ID: <strong id="binId">Checking...</strong></p>
+        <p id="binLocation">Checking location...</p>
+      </div>
+
+      <div id="errorMessage" class="message error"></div>
+
+      <form id="reportForm">
+
+        <label for="problem">Select Problem *</label>
+        <select id="problem" required>
+          <option value="">Choose a problem</option>
+          <option value="Dustbin Full">Dustbin Full</option>
+          <option value="Garbage Overflowing">Garbage Overflowing</option>
+          <option value="Bad Smell">Bad Smell</option>
+          <option value="Dustbin Damaged">Dustbin Damaged</option>
+          <option value="Other">Other Problem</option>
+        </select>
+
+        <label for="description">Additional Details (Optional)</label>
+        <textarea id="description" maxlength="500"
+          placeholder="Describe the problem..."></textarea>
+
+        <button type="submit" id="submitButton">
+          Submit Report
+        </button>
+
+      </form>
+
+      <p class="note">
+        Database connection is required to deliver reports to cleaning staff.
+      </p>
+
+      <a href="index.html" class="back">← Back to Home</a>
+
+    </div>
+
+    <footer>
+      TEAM TECH ROOT | Cleaner Campus Initiative
+    </footer>
+
+  </div>
+
+  <script>
+    const bins = {
+      "BIN-001": "Main Gate",
+      "BIN-002": "Canteen",
+      "BIN-003": "Library"
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const bin = params.get("bin");
+
+    const binId = document.getElementById("binId");
+    const binLocation = document.getElementById("binLocation");
+    const errorMessage = document.getElementById("errorMessage");
+    const reportForm = document.getElementById("reportForm");
+
+    if (bin && Object.prototype.hasOwnProperty.call(bins, bin)) {
+      binId.textContent = bin;
+      binLocation.textContent = "Location: " + bins[bin];
+    } else {
+      binId.textContent = "Unknown";
+      binLocation.textContent = "No valid dustbin was identified.";
+
+      errorMessage.textContent =
+        "Invalid dustbin QR code. Please scan the QR code attached to a registered dustbin.";
+
+      errorMessage.style.display = "block";
+      reportForm.style.display = "none";
+    }
+
+    reportForm.addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      if (!bin || !Object.prototype.hasOwnProperty.call(bins, bin)) {
+        return;
+      }
+
+      alert(
+        "The form is working, but Firebase has not been connected yet. Your report has NOT been saved."
+      );
+    });
+  </script>
+
+</body>
+</html>
