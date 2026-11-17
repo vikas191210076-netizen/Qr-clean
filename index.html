@@ -1,0 +1,268 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TEAM TECH ROOT | Smart Garbage Reporting</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #f4f8f4;
+      color: #20352a;
+      line-height: 1.6;
+    }
+
+    header {
+      background: #155d35;
+      color: white;
+      padding: 18px 15px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 25px;
+      letter-spacing: 1px;
+    }
+
+    header p {
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    nav {
+      background: #104629;
+      display: flex;
+      justify-content: center;
+      gap: 25px;
+      padding: 12px;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    nav a:hover {
+      color: #b8f5c8;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 55px 20px;
+      background: linear-gradient(135deg, #dff5e4, #ffffff);
+    }
+
+    .hero .icon {
+      font-size: 55px;
+      margin-bottom: 10px;
+    }
+
+    .hero h2 {
+      font-size: 29px;
+      color: #155d35;
+      margin-bottom: 12px;
+    }
+
+    .hero p {
+      max-width: 600px;
+      margin: 0 auto 22px;
+      color: #52665a;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 12px 22px;
+      background: #188348;
+      color: white;
+      text-decoration: none;
+      border-radius: 7px;
+      font-weight: bold;
+      margin: 5px;
+    }
+
+    .btn:hover {
+      background: #105c32;
+    }
+
+    .btn.secondary {
+      background: white;
+      color: #155d35;
+      border: 2px solid #188348;
+    }
+
+    section {
+      padding: 35px 18px;
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    section h2 {
+      text-align: center;
+      color: #155d35;
+      margin-bottom: 22px;
+    }
+
+    .about {
+      text-align: center;
+      max-width: 750px;
+      margin: auto;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: white;
+      padding: 22px 16px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 3px 12px #0000000d;
+      border: 1px solid #e0ebe2;
+    }
+
+    .card .icon {
+      font-size: 35px;
+      margin-bottom: 8px;
+    }
+
+    .card h3 {
+      color: #17643a;
+      margin-bottom: 8px;
+    }
+
+    .card p {
+      color: #607066;
+      font-size: 14px;
+    }
+
+    .report-box {
+      background: #e0f3e5;
+      text-align: center;
+      border-radius: 12px;
+      padding: 30px 18px;
+    }
+
+    .report-box h2 {
+      margin-bottom: 10px;
+    }
+
+    footer {
+      background: #104629;
+      color: white;
+      text-align: center;
+      padding: 20px 12px;
+      font-size: 13px;
+    }
+
+    footer p {
+      margin: 4px 0;
+    }
+
+    @media (max-width: 480px) {
+      .hero h2 {
+        font-size: 25px;
+      }
+
+      nav {
+        gap: 18px;
+      }
+
+      .hero {
+        padding: 40px 15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header id="home">
+    <h1>TEAM TECH ROOT</h1>
+    <p>QR-Based Garbage Reporting System</p>
+  </header>
+
+  <nav>
+    <a href="#home">Home</a>
+    <a href="#about">About</a>
+    <a href="#how">How It Works</a>
+    <a href="login.html">Staff Login</a>
+  </nav>
+
+  <div class="hero">
+    <div class="icon">♻️</div>
+    <h2>A Cleaner Campus Starts With You</h2>
+    <p>
+      Help keep our campus clean. Scan the QR code attached to a
+      dustbin to report garbage problems and notify cleaning staff.
+    </p>
+
+    <a href="#how" class="btn">How It Works</a>
+    <a href="report.html" class="btn secondary">Report a Problem</a>
+  </div>
+
+  <section id="about">
+    <h2>About Our Project</h2>
+    <div class="about">
+      <p>
+        TEAM TECH ROOT is a web-based system that simplifies garbage
+        reporting. Every dustbin has a unique QR code. Users can report
+        a full dustbin, overflowing garbage, bad smell, or damage.
+        Authorised cleaning staff can view reports and update their status.
+        Our goal is to make waste management easier and improve campus hygiene.
+      </p>
+    </div>
+  </section>
+
+  <section id="how">
+    <h2>How It Works</h2>
+
+    <div class="cards">
+      <div class="card">
+        <div class="icon">📱</div>
+        <h3>1. Scan QR Code</h3>
+        <p>Scan the unique QR code attached to the dustbin using your phone.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon">📝</div>
+        <h3>2. Report Problem</h3>
+        <p>Select the problem and submit your report for that particular bin.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon">🧹</div>
+        <h3>3. Staff Takes Action</h3>
+        <p>Authorised cleaning staff review the report and update its status.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="report-box">
+      <h2>See a Garbage Problem?</h2>
+      <p>Help us create a cleaner and healthier environment.</p>
+      <a href="report.html" class="btn">Go to Reporting Page</a>
+    </div>
+  </section>
+
+  <footer>
+    <p><strong>TEAM TECH ROOT</strong></p>
+    <p>QR-Based Garbage Reporting System</p>
+    <p>Building a cleaner and greener campus.</p>
+  </footer>
+
+</body>
+</html>
