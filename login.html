@@ -113,8 +113,7 @@ const firebaseConfig = {
           document.getElementById("password").value
         );
 
-        message.textContent =
-          "Login successful. Staff dashboard is not set up yet.";
+        window.location.href = "dashboard.html";
       } catch (error) {
         message.textContent =
           error.code === "auth/invalid-credential"
