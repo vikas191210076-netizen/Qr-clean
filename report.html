@@ -4,206 +4,181 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Report Garbage | TEAM TECH ROOT</title>
+  <title>QR-CLEAN | Report Garbage</title>
 
   <style>
     * {
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
     }
 
     body {
-      background: #f1f7f2;
-      color: #243b2d;
-      padding: 20px 12px;
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #dff7e5, #e5efff);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
     .container {
-      max-width: 500px;
-      margin: 20px auto;
+      width: 100%;
+      max-width: 430px;
       background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 15px #00000012;
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 5px 20px #00000018;
     }
 
-    header {
-      background: #155d35;
-      color: white;
+    h1 {
       text-align: center;
-      padding: 22px 12px;
+      color: #16834a;
+      margin-top: 0;
     }
 
-    header h1 {
-      font-size: 24px;
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 22px;
     }
 
-    header p {
-      font-size: 13px;
-      margin-top: 5px;
-    }
-
-    .content {
-      padding: 22px;
-    }
-
-    .bin-box {
-      background: #e3f4e7;
-      border: 1px solid #b7dfc0;
+    .bin {
+      background: #e9f8ee;
+      padding: 14px;
       border-radius: 10px;
-      padding: 18px;
-      text-align: center;
       margin-bottom: 20px;
-    }
-
-    .bin-icon {
-      font-size: 40px;
-    }
-
-    .bin-box h2 {
-      color: #155d35;
-      margin: 7px 0;
-    }
-
-    .bin-box p {
-      font-size: 14px;
-      margin-top: 4px;
+      line-height: 1.7;
     }
 
     label {
       display: block;
       font-weight: bold;
-      margin: 16px 0 7px;
+      margin: 15px 0 8px;
     }
 
     select, textarea {
       width: 100%;
       padding: 12px;
-      border: 1px solid #ccd8ce;
-      border-radius: 7px;
-      font-size: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
       background: white;
     }
 
     textarea {
-      min-height: 90px;
+      min-height: 100px;
       resize: vertical;
     }
 
     button {
       width: 100%;
       padding: 14px;
-      margin-top: 22px;
-      border: none;
-      border-radius: 7px;
-      background: #188348;
+      margin-top: 20px;
+      background: #16834a;
       color: white;
+      border: none;
+      border-radius: 8px;
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
     }
 
     button:disabled {
-      background: #89978d;
+      opacity: 0.6;
     }
 
-    .message {
-      display: none;
-      padding: 12px;
-      margin-bottom: 15px;
-      border-radius: 7px;
-      font-size: 14px;
+    #message {
+      margin-top: 16px;
+      text-align: center;
+      overflow-wrap: anywhere;
+      line-height: 1.5;
+    }
+
+    .success {
+      color: #16834a;
     }
 
     .error {
-      background: #ffeded;
-      color: #a32222;
+      color: #c62828;
     }
 
     .note {
-      margin-top: 15px;
-      text-align: center;
-      color: #68776c;
       font-size: 12px;
-    }
-
-    .back {
-      display: block;
+      color: #666;
       text-align: center;
-      margin-top: 20px;
-      color: #155d35;
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    footer {
-      text-align: center;
-      color: #65766a;
-      font-size: 12px;
-      padding: 15px;
+      margin-top: 18px;
     }
   </style>
 </head>
 
 <body>
+  <main class="container">
+    <h1>QR-CLEAN</h1>
+    <p class="subtitle">Help us keep our campus clean!</p>
 
-  <div class="container">
-
-    <header>
-      <h1>TEAM TECH ROOT</h1>
-      <p>QR-Based Garbage Reporting System</p>
-    </header>
-
-    <div class="content">
-
-      <div class="bin-box">
-        <div class="bin-icon">🗑️</div>
-        <h2>Report a Problem</h2>
-        <p>Dustbin ID: <strong id="binId">Checking...</strong></p>
-        <p id="binLocation">Checking location...</p>
-      </div>
-
-      <div id="errorMessage" class="message error"></div>
-
-      <form id="reportForm">
-
-        <label for="problem">Select Problem *</label>
-        <select id="problem" required>
-          <option value="">Choose a problem</option>
-          <option value="Dustbin Full">Dustbin Full</option>
-          <option value="Garbage Overflowing">Garbage Overflowing</option>
-          <option value="Bad Smell">Bad Smell</option>
-          <option value="Dustbin Damaged">Dustbin Damaged</option>
-          <option value="Other">Other Problem</option>
-        </select>
-
-        <label for="description">Additional Details (Optional)</label>
-        <textarea id="description" maxlength="500"
-          placeholder="Describe the problem..."></textarea>
-
-        <button type="submit" id="submitButton">
-          Submit Report
-        </button>
-
-      </form>
-
-      <p class="note">
-        Database connection is required to deliver reports to cleaning staff.
-      </p>
-
-      <a href="index.html" class="back">← Back to Home</a>
-
+    <div class="bin">
+      <strong>Dustbin ID:</strong> <span id="binId">Checking...</span><br>
+      <strong>Location:</strong> <span id="binLocation">Checking...</span>
     </div>
 
-    <footer>
-      TEAM TECH ROOT | Cleaner Campus Initiative
-    </footer>
+    <form id="reportForm">
+      <label for="issue">Select the problem</label>
 
-  </div>
+      <select id="issue" required>
+        <option value="">Choose an issue</option>
+        <option>Dustbin Full</option>
+        <option>Garbage Overflowing</option>
+        <option>Bad Smell</option>
+        <option>Dustbin Damaged</option>
+        <option>Other</option>
+      </select>
 
-  <script>
+      <label for="details">Additional details (optional)</label>
+
+      <textarea
+        id="details"
+        maxlength="500"
+        placeholder="Describe the problem..."
+      ></textarea>
+
+      <button id="submitBtn" type="submit">
+        Submit Report
+      </button>
+
+      <p id="message" role="status" aria-live="polite"></p>
+    </form>
+
+    <p class="note">
+      QR-CLEAN · Campus Garbage Reporting System
+    </p>
+  </main>
+
+  <script type="module">
+    import { initializeApp }
+      from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+    // STEP 1: Copy your existing Firebase settings from login.html.
+    const firebaseConfig = {
+      apiKey: "PASTE_YOUR_API_KEY",
+      authDomain: "PASTE_YOUR_AUTH_DOMAIN",
+      projectId: "PASTE_YOUR_PROJECT_ID",
+      storageBucket: "PASTE_YOUR_STORAGE_BUCKET",
+      messagingSenderId: "PASTE_YOUR_MESSAGING_SENDER_ID",
+      appId: "PASTE_YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Only these three registered bins are accepted.
     const bins = {
       "BIN-001": "Main Gate",
       "BIN-002": "Canteen",
@@ -211,39 +186,75 @@
     };
 
     const params = new URLSearchParams(window.location.search);
-    const bin = params.get("bin");
+    const binId = params.get("bin");
+    const binLocation = bins[binId];
 
-    const binId = document.getElementById("binId");
-    const binLocation = document.getElementById("binLocation");
-    const errorMessage = document.getElementById("errorMessage");
-    const reportForm = document.getElementById("reportForm");
+    const binIdElement = document.getElementById("binId");
+    const locationElement = document.getElementById("binLocation");
+    const form = document.getElementById("reportForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const message = document.getElementById("message");
 
-    if (bin && Object.prototype.hasOwnProperty.call(bins, bin)) {
-      binId.textContent = bin;
-      binLocation.textContent = "Location: " + bins[bin];
+    if (binLocation) {
+      binIdElement.textContent = binId;
+      locationElement.textContent = binLocation;
     } else {
-      binId.textContent = "Unknown";
-      binLocation.textContent = "No valid dustbin was identified.";
+      binIdElement.textContent = "Invalid QR code";
+      locationElement.textContent = "Unknown location";
+      form.querySelectorAll("select, textarea, button")
+        .forEach(element => element.disabled = true);
 
-      errorMessage.textContent =
-        "Invalid dustbin QR code. Please scan the QR code attached to a registered dustbin.";
-
-      errorMessage.style.display = "block";
-      reportForm.style.display = "none";
+      message.textContent =
+        "Invalid dustbin QR code. Please scan a registered bin.";
+      message.className = "error";
     }
 
-    reportForm.addEventListener("submit", function(event) {
+    form.addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      if (!bin || !Object.prototype.hasOwnProperty.call(bins, bin)) {
+      if (!binLocation) return;
+
+      const issue = document.getElementById("issue").value;
+      const details = document.getElementById("details").value.trim();
+
+      if (!issue) {
+        message.textContent = "Please select an issue.";
+        message.className = "error";
         return;
       }
 
-      alert(
-        "The form is working, but Firebase has not been connected yet. Your report has NOT been saved."
-      );
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitting...";
+      message.textContent = "Saving your report...";
+      message.className = "";
+
+      try {
+        await addDoc(collection(db, "reports"), {
+          binId: binId,
+          binLocation: binLocation,
+          issue: issue,
+          details: details,
+          status: "Pending",
+          createdAt: serverTimestamp()
+        });
+
+        message.textContent =
+          "Report submitted successfully! Thank you for helping keep our campus clean.";
+        message.className = "success";
+
+        form.reset();
+        submitBtn.textContent = "Report Submitted";
+      } catch (error) {
+        console.error("Report submission error:", error);
+
+        message.textContent =
+          "Report was not saved. Please check your Firebase settings and Firestore rules, then try again.";
+        message.className = "error";
+
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit Report";
+      }
     });
   </script>
-
 </body>
 </html>
