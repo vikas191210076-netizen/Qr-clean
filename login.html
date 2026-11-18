@@ -82,14 +82,16 @@
 
     // Replace these placeholder values with your Firebase
     // web app configuration from Project settings.
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCCorpTfMlP2VTtQ3_rsZxxG6iEM4td-Wo",
+  authDomain: "qr-clean.firebaseapp.com",
+  projectId: "qr-clean",
+  storageBucket: "qr-clean.firebasestorage.app",
+  messagingSenderId: "853415187571",
+  appId: "1:853415187571:web:86b76fe67f51bb7a4d4606",
+  measurementId: "G-XFK1JNJBTR"
+};
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
