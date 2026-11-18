@@ -1,0 +1,128 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Staff Login | QR-CLEAN</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: #edf7ef;
+      color: #183b29;
+    }
+    .card {
+      width: 100%;
+      max-width: 380px;
+      padding: 26px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 5px 24px #00000012;
+    }
+    h1 { text-align: center; margin-bottom: 8px; }
+    p { text-align: center; color: #587061; }
+    label { display: block; margin-top: 16px; }
+    input {
+      width: 100%;
+      padding: 13px;
+      margin-top: 7px;
+      border: 1px solid #ccd8cf;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 22px;
+      border: 0;
+      border-radius: 8px;
+      background: #16834a;
+      color: white;
+      font-size: 16px;
+    }
+    #message { font-size: 14px; overflow-wrap: anywhere; }
+    a { color: #16834a; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>QR-CLEAN</h1>
+    <p>Authorised Staff Login</p>
+
+    <form id="loginForm">
+      <label for="email">Staff email</label>
+      <input id="email" type="email" autocomplete="username"
+        required>
+
+      <label for="password">Password</label>
+      <input id="password" type="password"
+        autocomplete="current-password" required>
+
+      <button id="loginButton" type="submit">Sign In</button>
+      <p id="message" role="status"></p>
+    </form>
+
+    <p><a href="index.html">Back to home</a></p>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from
+      "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword
+    } from
+      "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+    // Replace these placeholder values with your Firebase
+    // web app configuration from Project settings.
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const form = document.getElementById("loginForm");
+    const message = document.getElementById("message");
+    const button = document.getElementById("loginButton");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      message.textContent = "";
+      button.disabled = true;
+      button.textContent = "Signing in...";
+
+      try {
+        await signInWithEmailAndPassword(
+          auth,
+          document.getElementById("email").value.trim(),
+          document.getElementById("password").value
+        );
+
+        message.textContent =
+          "Login successful. Staff dashboard is not set up yet.";
+      } catch (error) {
+        message.textContent =
+          error.code === "auth/invalid-credential"
+            ? "Incorrect email or password."
+            : "Login failed. Check your Firebase setup and try again.";
+      } finally {
+        button.disabled = false;
+        button.textContent = "Sign In";
+      }
+    });
+  </script>
+</body>
+</html>
