@@ -1,0 +1,348 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR-CLEAN | Staff Dashboard</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 18px;
+      font-family: Arial, sans-serif;
+      background: #edf7f0;
+      color: #222;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+    }
+
+    header {
+      background: #16834a;
+      color: white;
+      padding: 20px;
+      border-radius: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    h1 { margin: 0; font-size: 24px; }
+
+    header p { margin-bottom: 0; }
+
+    button {
+      padding: 11px 14px;
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .logout {
+      background: white;
+      color: #16834a;
+    }
+
+    .summary {
+      background: white;
+      padding: 18px;
+      border-radius: 12px;
+      margin: 18px 0;
+      box-shadow: 0 2px 8px #0000000d;
+    }
+
+    .report {
+      background: white;
+      padding: 18px;
+      margin-bottom: 15px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px #0000000d;
+      overflow-wrap: anywhere;
+    }
+
+    .report h3 { margin-top: 0; color: #16834a; }
+
+    .report p { line-height: 1.5; }
+
+    .status {
+      font-weight: bold;
+    }
+
+    select {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #ccc;
+      border-radius: 7px;
+      background: white;
+      font-size: 16px;
+      margin-top: 8px;
+    }
+
+    .save {
+      width: 100%;
+      margin-top: 10px;
+      background: #16834a;
+      color: white;
+    }
+
+    .refresh {
+      background: #e1f2e6;
+      color: #166b3e;
+      margin-top: 10px;
+    }
+
+    #message {
+      padding: 12px 0;
+      line-height: 1.5;
+    }
+
+    .error { color: #b42318; }
+    .success { color: #16834a; }
+
+    .hidden { display: none; }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <header>
+      <div>
+        <h1>QR-CLEAN</h1>
+        <p>Staff Dashboard</p>
+      </div>
+      <button class="logout" id="logoutBtn">Log Out</button>
+    </header>
+
+    <div id="message" role="status" aria-live="polite">
+      Checking staff access...
+    </div>
+
+    <section id="dashboard" class="hidden">
+      <div class="summary">
+        <h2>Garbage Reports</h2>
+        <p id="count">Loading reports...</p>
+        <button class="refresh" id="refreshBtn">Refresh Reports</button>
+      </div>
+
+      <div id="reports"></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initializeApp }
+      from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      collection,
+      getDocs,
+      query,
+      orderBy,
+      updateDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+    // Copy the six values from login.html.
+    const firebaseConfig = {
+      apiKey: "PASTE_YOUR_API_KEY",
+      authDomain: "PASTE_YOUR_AUTH_DOMAIN",
+      projectId: "PASTE_YOUR_PROJECT_ID",
+      storageBucket: "PASTE_YOUR_STORAGE_BUCKET",
+      messagingSenderId: "PASTE_YOUR_MESSAGING_SENDER_ID",
+      appId: "PASTE_YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const message = document.getElementById("message");
+    const dashboard = document.getElementById("dashboard");
+    const reportsDiv = document.getElementById("reports");
+    const count = document.getElementById("count");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    let currentUser = null;
+
+    function showMessage(text, type = "") {
+      message.textContent = text;
+      message.className = type;
+    }
+
+    function addText(parent, tag, text, className = "") {
+      const element = document.createElement(tag);
+      element.textContent = text;
+      if (className) element.className = className;
+      parent.appendChild(element);
+      return element;
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.replace("login.html");
+        return;
+      }
+
+      try {
+        const staffRef = doc(db, "staff", user.uid);
+        const staffSnap = await getDoc(staffRef);
+
+        if (!staffSnap.exists() ||
+            staffSnap.data().role !== "staff") {
+          showMessage("Access denied. Staff account required.", "error");
+          await signOut(auth);
+          return;
+        }
+
+        currentUser = user;
+        dashboard.classList.remove("hidden");
+        showMessage("Staff access verified.", "success");
+        await loadReports();
+
+      } catch (error) {
+        console.error(error);
+        showMessage(
+          "Could not verify staff access. Check Firebase configuration and Firestore rules.",
+          "error"
+        );
+      }
+    });
+
+    async function loadReports() {
+      if (!currentUser) return;
+
+      reportsDiv.replaceChildren();
+      count.textContent = "Loading reports...";
+
+      try {
+        const reportsQuery = query(
+          collection(db, "reports"),
+          orderBy("createdAt", "desc")
+        );
+
+        const snapshot = await getDocs(reportsQuery);
+        count.textContent = "Total reports: " + snapshot.size;
+
+        if (snapshot.empty) {
+          addText(reportsDiv, "p", "No reports have been submitted yet.");
+          return;
+        }
+
+        snapshot.forEach((reportDoc) => {
+          const data = reportDoc.data();
+
+          const card = document.createElement("article");
+          card.className = "report";
+
+          addText(card, "h3", data.binLocation || "Unknown location");
+          addText(card, "p", "Report ID: " + reportDoc.id);
+          addText(card, "p", "Bin ID: " + (data.binId || "Unknown"));
+          addText(card, "p", "Issue: " + (data.issue || "Not specified"));
+          addText(card, "p", "Details: " + (data.details || "None"));
+          addText(card, "p", "Current status: " + (data.status || "Pending"),
+            "status");
+
+          if (data.createdAt && data.createdAt.toDate) {
+            addText(
+              card,
+              "p",
+              "Submitted: " + data.createdAt.toDate().toLocaleString()
+            );
+          }
+
+          const label = addText(card, "label", "Update status");
+          const select = document.createElement("select");
+          select.setAttribute("aria-label", "Update report status");
+          label.appendChild(select);
+
+          ["Pending", "In Progress", "Resolved"].forEach((status) => {
+            const option = document.createElement("option");
+            option.value = status;
+            option.textContent = status;
+            select.appendChild(option);
+          });
+
+          select.value = ["Pending", "In Progress", "Resolved"]
+            .includes(data.status) ? data.status : "Pending";
+
+          const saveBtn = document.createElement("button");
+          saveBtn.className = "save";
+          saveBtn.textContent = "Save Status";
+
+          saveBtn.addEventListener("click", async () => {
+            if (!currentUser) return;
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = "Saving...";
+
+            try {
+              await updateDoc(
+                doc(db, "reports", reportDoc.id),
+                {
+                  status: select.value,
+                  updatedAt: serverTimestamp()
+                }
+              );
+
+              showMessage("Report status updated successfully.", "success");
+              await loadReports();
+
+            } catch (error) {
+              console.error(error);
+              showMessage(
+                "Status update failed. Check your staff permissions and Firestore rules.",
+                "error"
+              );
+              saveBtn.disabled = false;
+              saveBtn.textContent = "Save Status";
+            }
+          });
+
+          card.appendChild(saveBtn);
+          reportsDiv.appendChild(card);
+        });
+
+      } catch (error) {
+        console.error(error);
+        count.textContent = "";
+        showMessage(
+          "Could not load reports. Check your staff document and Firestore rules.",
+          "error"
+        );
+      }
+    }
+
+    document.getElementById("refreshBtn").addEventListener("click", loadReports);
+
+    logoutBtn.addEventListener("click", async () => {
+      logoutBtn.disabled = true;
+
+      try {
+        await signOut(auth);
+        window.location.replace("login.html");
+      } catch (error) {
+        console.error(error);
+        showMessage("Logout failed. Please try again.", "error");
+        logoutBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
