@@ -319,13 +319,41 @@ addText(card, "p", "Current status: " + (data.status || "Pending"),
             saveBtn.textContent = "Saving...";
 
             try {
-              await updateDoc(
-                doc(db, "reports", reportDoc.id),
-                {
-                  status: select.value,
-                  updatedAt: serverTimestamp()
-                }
-              );
+              const reportRef = doc(db, "reports", reportDoc.id);
+const stateRef = doc(db, "binReportState", data.binId);
+
+await runTransaction(db, async (transaction) => {
+  const reportSnap = await transaction.get(reportRef);
+  const stateSnap = await transaction.get(stateRef);
+
+  if (!reportSnap.exists()) {
+    throw new Error("Report not found.");
+  }
+
+  const reportData = reportSnap.data();
+
+  transaction.update(reportRef, {
+    status: select.value,
+    updatedAt: serverTimestamp()
+  });
+
+  if (
+    stateSnap.exists() &&
+    stateSnap.data().activeReportId === reportDoc.id
+  ) {
+    transaction.update(stateRef, {
+      status: select.value,
+      updatedAt: serverTimestamp()
+    });
+  } else if (!stateSnap.exists()) {
+    transaction.set(stateRef, {
+      binId: reportData.binId,
+      activeReportId: reportDoc.id,
+      status: select.value,
+      updatedAt: serverTimestamp()
+    });
+  }
+});
 
               showMessage("Report status updated successfully.", "success");
               await loadReports();
