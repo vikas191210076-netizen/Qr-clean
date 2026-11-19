@@ -132,10 +132,15 @@
     import { initializeApp } from
       "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 
-    import {
-      getFirestore, doc, getDoc, addDoc, collection,
-      serverTimestamp
-    } from
+   import {
+  getFirestore,
+  doc,
+  getDoc,
+  addDoc,
+  collection,
+  serverTimestamp,
+  runTransaction
+} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
       "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
     // Replace these placeholders with your existing Firebase config.
@@ -302,7 +307,28 @@
 
         if (photoUrl) report.photoUrl = photoUrl;
 
-        await addDoc(collection(db, "reports"), report);
+       const reportRef = doc(collection(db, "reports"));
+const stateRef = doc(db, "binReportState", binId);
+
+await runTransaction(db, async (transaction) => {
+  const stateSnap = await transaction.get(stateRef);
+
+  if (
+    stateSnap.exists() &&
+    ["Pending", "In Progress"].includes(stateSnap.data().status)
+  ) {
+    throw new Error("ALREADY_REPORTED");
+  }
+
+  transaction.set(reportRef, report);
+
+  transaction.set(stateRef, {
+    binId: binId,
+    activeReportId: reportRef.id,
+    status: "Pending",
+    updatedAt: serverTimestamp()
+  });
+});
 
         form.reset();
         preview.style.display = "none";
@@ -313,7 +339,12 @@
         showMessage("Report submitted successfully. Thank you!", true);
       } catch (error) {
         console.error(error);
-        showMessage(error.message || "Submission failed. Please try again.");
+
+if (error.message === "ALREADY_REPORTED") {
+  showMessage("Already reported! This dustbin has an active report.");
+} else {
+  showMessage(error.message || "Submission failed. Please try again.");
+}
       } finally {
         submitBtn.disabled = false;
       }
