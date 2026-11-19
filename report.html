@@ -4,127 +4,95 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QR-CLEAN | Report Garbage</title>
+  <title>QR-CLEAN | Public Garbage Reporting</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
       padding: 20px;
       font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #dff7e5, #e5efff);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      background: linear-gradient(135deg, #e8f5e9, #e3f2fd);
+      color: #183329;
     }
 
     .container {
-      width: 100%;
-      max-width: 430px;
+      max-width: 520px;
+      margin: 20px auto;
+      padding: 24px;
       background: white;
-      padding: 25px;
-      border-radius: 16px;
-      box-shadow: 0 5px 20px #00000018;
+      border-radius: 18px;
+      box-shadow: 0 5px 24px #00000015;
     }
 
-    h1 {
-      text-align: center;
-      color: #16834a;
-      margin-top: 0;
-    }
-
-    .subtitle {
-      text-align: center;
-      color: #666;
-      margin-bottom: 22px;
-    }
-
-    .bin {
-      background: #e9f8ee;
-      padding: 14px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      line-height: 1.7;
-    }
+    h1 { margin-bottom: 8px; color: #137547; }
+    .subtitle { color: #53665c; line-height: 1.5; }
 
     label {
       display: block;
+      margin-top: 17px;
+      margin-bottom: 7px;
       font-weight: bold;
-      margin: 15px 0 8px;
     }
 
-    select, textarea {
+    input, select, textarea, button {
       width: 100%;
       padding: 12px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
       font-size: 16px;
-      background: white;
+      border-radius: 9px;
     }
 
-    textarea {
-      min-height: 100px;
-      resize: vertical;
+    input, select, textarea {
+      border: 1px solid #bdcfc3;
+      background: #fff;
     }
+
+    textarea { min-height: 95px; resize: vertical; }
 
     button {
-      width: 100%;
-      padding: 14px;
       margin-top: 20px;
+      border: none;
       background: #16834a;
       color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
       font-weight: bold;
       cursor: pointer;
     }
 
-    button:disabled {
-      opacity: 0.6;
-    }
+    button:disabled { opacity: .6; cursor: wait; }
 
     #message {
       margin-top: 16px;
-      text-align: center;
-      overflow-wrap: anywhere;
       line-height: 1.5;
+      overflow-wrap: anywhere;
     }
 
-    .success {
-      color: #16834a;
+    #preview {
+      display: none;
+      width: 100%;
+      max-height: 260px;
+      object-fit: contain;
+      margin-top: 12px;
+      border-radius: 10px;
     }
 
-    .error {
-      color: #c62828;
-    }
-
-    .note {
-      font-size: 12px;
-      color: #666;
-      text-align: center;
-      margin-top: 18px;
-    }
+    .small { font-size: 13px; color: #59685f; }
   </style>
 </head>
 
 <body>
   <main class="container">
     <h1>QR-CLEAN</h1>
-    <p class="subtitle">Help us keep our campus clean!</p>
+    <p><strong>A Cleaner Public Space Starts With You.</strong></p>
+    <p class="subtitle">
+      Report overflowing dustbins, bad smells, or damaged bins
+      in registered public locations.
+    </p>
 
-    <div class="bin">
-      <strong>Dustbin ID:</strong> <span id="binId">Checking...</span><br>
-      <strong>Location:</strong> <span id="binLocation">Checking...</span>
-    </div>
+    <p id="binInfo">Checking registered dustbin...</p>
 
     <form id="reportForm">
-      <label for="issue">Select the problem</label>
-
+      <label for="issue">Select the issue</label>
       <select id="issue" required>
         <option value="">Choose an issue</option>
         <option>Dustbin Full</option>
@@ -134,39 +102,44 @@
         <option>Other</option>
       </select>
 
-      <label for="details">Additional details (optional)</label>
+      <label for="details">Additional details</label>
+      <textarea id="details" maxlength="500"
+        placeholder="Describe the problem (optional)"></textarea>
 
-      <textarea
-        id="details"
-        maxlength="500"
-        placeholder="Describe the problem..."
-      ></textarea>
+      <label for="photo">Photo proof (optional)</label>
+   <label for="photo">📸 Take a Photo of the Dustbin</label>
 
-      <button id="submitBtn" type="submit">
-        Submit Report
-      </button>
+<input
+  id="photo"
+  type="file"
+  accept="image/*"
+  capture="environment"
+  required
+>
+      <p class="small">
+        JPG, PNG or WebP only. Maximum size: 5 MB.
+        Avoid including people's faces or personal information.
+      </p>
 
-      <p id="message" role="status" aria-live="polite"></p>
+      <img id="preview" alt="Selected photo preview">
+
+      <button id="submitBtn" type="submit">Submit Report</button>
+      <div id="message" role="status" aria-live="polite"></div>
     </form>
-
-    <p class="note">
-      QR-CLEAN · Campus Garbage Reporting System
-    </p>
   </main>
 
   <script type="module">
-    import { initializeApp }
-      from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { initializeApp } from
+      "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 
     import {
-      getFirestore,
-      collection,
-      addDoc,
+      getFirestore, doc, getDoc, addDoc, collection,
       serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+    } from
+      "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-    // STEP 1: Copy your existing Firebase settings from login.html.
-    const firebaseConfig = {
+    // Replace these placeholders with your existing Firebase config.
+  const firebaseConfig = {
   apiKey: "AIzaSyCCorpTfMlP2VTtQ3_rsZxxG6iEM4td-Wo",
   authDomain: "qr-clean.firebaseapp.com",
   projectId: "qr-clean",
@@ -175,87 +148,178 @@
   appId: "1:853415187571:web:86b76fe67f51bb7a4d4606",
   measurementId: "G-XFK1JNJBTR"
 };
+    const CLOUD_NAME = "h0vohb8v";
+    const UPLOAD_PRESET = "qr_clean_reports";
+    const MAX_SIZE = 5 * 1024 * 1024;
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Only these three registered bins are accepted.
-    const bins = {
-      "BIN-001": "Main Gate",
-      "BIN-002": "Canteen",
-      "BIN-003": "Library"
-    };
+    const params = new URLSearchParams(location.search);
+    const binId = (params.get("bin") || "").trim().toUpperCase();
 
-    const params = new URLSearchParams(window.location.search);
-    const binId = params.get("bin");
-    const binLocation = bins[binId];
-
-    const binIdElement = document.getElementById("binId");
-    const locationElement = document.getElementById("binLocation");
+    const binInfo = document.getElementById("binInfo");
     const form = document.getElementById("reportForm");
-    const submitBtn = document.getElementById("submitBtn");
+    const photoInput = document.getElementById("photo");
+    const preview = document.getElementById("preview");
     const message = document.getElementById("message");
+    const submitBtn = document.getElementById("submitBtn");
 
-    if (binLocation) {
-      binIdElement.textContent = binId;
-      locationElement.textContent = binLocation;
-    } else {
-      binIdElement.textContent = "Invalid QR code";
-      locationElement.textContent = "Unknown location";
-      form.querySelectorAll("select, textarea, button")
-        .forEach(element => element.disabled = true);
+    let binData = null;
 
-      message.textContent =
-        "Invalid dustbin QR code. Please scan a registered bin.";
-      message.className = "error";
+    function showMessage(text, success = false) {
+      message.textContent = text;
+      message.style.color = success ? "#137547" : "#b42318";
+    }
+
+    async function loadBin() {
+      if (!/^BIN-\d{3}$/.test(binId)) {
+        binInfo.textContent = "Invalid QR code. Please scan a registered bin.";
+        form.hidden = true;
+        return;
+      }
+
+      try {
+        const snap = await getDoc(doc(db, "bins", binId));
+
+        if (!snap.exists() || snap.data().active !== true) {
+          binInfo.textContent = "This dustbin is not registered or is inactive.";
+          form.hidden = true;
+          return;
+        }
+
+        binData = snap.data();
+
+        if (typeof binData.location !== "string" ||
+            typeof binData.name !== "string") {
+          throw new Error("Bin details are incomplete.");
+        }
+
+        binInfo.textContent =
+          "Dustbin: " + binData.name + " | Location: " + binData.location;
+      } catch (error) {
+        console.error(error);
+        binInfo.textContent =
+          "Could not verify this dustbin. Please try again later.";
+        form.hidden = true;
+      }
+    }
+
+    photoInput.addEventListener("change", () => {
+      const file = photoInput.files[0];
+      preview.style.display = "none";
+      preview.removeAttribute("src");
+
+      if (!file) return;
+
+      const allowed = ["image/jpeg", "image/png", "image/webp"];
+
+      if (!allowed.includes(file.type)) {
+        photoInput.value = "";
+        showMessage("Choose a JPG, PNG, or WebP image.");
+        return;
+      }
+
+      if (file.size > MAX_SIZE) {
+        photoInput.value = "";
+        showMessage("Photo must be 5 MB or smaller.");
+        return;
+      }
+
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+      showMessage("");
+    });
+
+    async function uploadPhoto(file) {
+      const body = new FormData();
+      body.append("file", file);
+      body.append("upload_preset", UPLOAD_PRESET);
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+        { method: "POST", body }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.secure_url) {
+        throw new Error("Photo upload failed. Please try again.");
+      }
+
+      return result.secure_url;
     }
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      if (!binLocation) return;
-
-      const issue = document.getElementById("issue").value;
-      const details = document.getElementById("details").value.trim();
-
-      if (!issue) {
-        message.textContent = "Please select an issue.";
-        message.className = "error";
+      if (!binData) {
+        showMessage("A registered dustbin could not be verified.");
         return;
       }
 
+      const issue = document.getElementById("issue").value;
+      const details = document.getElementById("details").value.trim();
+      const file = photoInput.files[0];
+
+      if (!issue) {
+        showMessage("Please select an issue.");
+        return;
+      }
+
+      if (details.length > 500) {
+        showMessage("Details must be 500 characters or fewer.");
+        return;
+      }
+
+      if (file) {
+        const allowed = ["image/jpeg", "image/png", "image/webp"];
+        if (!allowed.includes(file.type) || file.size > MAX_SIZE) {
+          showMessage("Choose a supported image of 5 MB or less.");
+          return;
+        }
+      }
+
       submitBtn.disabled = true;
-      submitBtn.textContent = "Submitting...";
-      message.textContent = "Saving your report...";
-      message.className = "";
+      showMessage("Submitting your report...");
 
       try {
-        await addDoc(collection(db, "reports"), {
-          binId: binId,
-          binLocation: binLocation,
-          issue: issue,
-          details: details,
+        let photoUrl = null;
+
+        if (file) {
+          showMessage("Uploading photo...");
+          photoUrl = await uploadPhoto(file);
+        }
+
+        const report = {
+          binId,
+          binLocation: binData.location,
+          issue,
+          details,
           status: "Pending",
           createdAt: serverTimestamp()
-        });
+        };
 
-        message.textContent =
-          "Report submitted successfully! Thank you for helping keep our campus clean.";
-        message.className = "success";
+        if (photoUrl) report.photoUrl = photoUrl;
+
+        await addDoc(collection(db, "reports"), report);
 
         form.reset();
-        submitBtn.textContent = "Report Submitted";
+        preview.style.display = "none";
+        preview.removeAttribute("src");
+
+        binInfo.textContent =
+          "Report submitted for " + binData.name + ".";
+        showMessage("Report submitted successfully. Thank you!", true);
       } catch (error) {
-        console.error("Report submission error:", error);
-
-        message.textContent =
-          "Report was not saved. Please check your Firebase settings and Firestore rules, then try again.";
-        message.className = "error";
-
+        console.error(error);
+        showMessage(error.message || "Submission failed. Please try again.");
+      } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = "Submit Report";
       }
     });
+
+    await loadBin();
   </script>
 </body>
 </html>
