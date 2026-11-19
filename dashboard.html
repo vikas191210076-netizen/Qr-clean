@@ -156,6 +156,7 @@
       query,
       orderBy,
       updateDoc,
+      runTransaction,
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
@@ -332,29 +333,34 @@ await runTransaction(db, async (transaction) => {
 
   const reportData = reportSnap.data();
 
-  transaction.update(reportRef, {
-    status: select.value,
-    updatedAt: serverTimestamp()
-  });
-
   if (
-    stateSnap.exists() &&
-    stateSnap.data().activeReportId === reportDoc.id
+    !stateSnap.exists() ||
+    stateSnap.data().activeReportId !== reportDoc.id
   ) {
+    throw new Error(
+      "Report state mismatch. Please check the bin report state."
+    );
+  }
+
+  if (select.value === "Resolved") {
+    transaction.delete(reportRef);
+
     transaction.update(stateRef, {
+      status: "Resolved",
+      updatedAt: serverTimestamp()
+    });
+  } else {
+    transaction.update(reportRef, {
       status: select.value,
       updatedAt: serverTimestamp()
     });
-  } else if (!stateSnap.exists()) {
-    transaction.set(stateRef, {
-      binId: reportData.binId,
-      activeReportId: reportDoc.id,
+
+    transaction.update(stateRef, {
       status: select.value,
       updatedAt: serverTimestamp()
     });
   }
 });
-
               showMessage("Report status updated successfully.", "success");
               await loadReports();
 
