@@ -1,0 +1,748 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR-CLEAN | Staff Dashboard</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: Arial, sans-serif;
+      background: #edf7f0;
+      color: #222;
+    }
+
+    .container { max-width: 900px; margin: auto; }
+
+    header {
+      background: #16834a;
+      color: white;
+      padding: 20px;
+      border-radius: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    h1 { margin: 0; font-size: 25px; }
+    h2 { margin-top: 0; }
+
+    button, input {
+      font: inherit;
+      border-radius: 7px;
+    }
+
+    button {
+      padding: 11px 14px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:disabled { opacity: .6; cursor: wait; }
+
+    input {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #ccc;
+      margin-top: 6px;
+      margin-bottom: 12px;
+      background: white;
+    }
+
+    label { display: block; font-weight: bold; }
+
+    .panel, .report, .bin-card {
+      background: white;
+      padding: 18px;
+      margin: 16px 0;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px #0000000d;
+      overflow-wrap: anywhere;
+    }
+
+    .primary { background: #16834a; color: white; }
+    .secondary { background: #e1f2e6; color: #166b3e; }
+    .logout { background: white; color: #16834a; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .tabs button { flex: 1; min-width: 130px; }
+
+    .hidden { display: none !important; }
+    .success { color: #16834a; }
+    .error { color: #b42318; }
+    .muted { color: #666; font-size: 14px; }
+    .status { font-weight: bold; }
+
+    select {
+      width: 100%;
+      padding: 11px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 7px;
+      background: white;
+      font-size: 16px;
+    }
+
+    .full-button { width: 100%; margin-top: 8px; }
+
+    .qr {
+      display: block;
+      width: 190px;
+      height: 190px;
+      max-width: 100%;
+      margin: 12px auto;
+      object-fit: contain;
+      background: white;
+    }
+
+    .qr-area {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 14px;
+      text-align: center;
+    }
+
+    .qr-area a { overflow-wrap: anywhere; }
+
+    .bin-card h3 { color: #16834a; margin-top: 0; }
+
+    .bin-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .bin-actions button { flex: 1; min-width: 120px; }
+
+    .inactive { color: #b42318; font-weight: bold; }
+
+    #message {
+      padding: 12px 0;
+      line-height: 1.5;
+    }
+
+    img.proof {
+      width: 100%;
+      max-width: 350px;
+      max-height: 300px;
+      object-fit: contain;
+      display: block;
+      margin: 10px 0;
+      border-radius: 10px;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 10px; }
+      .panel, .report, .bin-card { padding: 14px; }
+      header { padding: 16px; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <header>
+      <div>
+        <h1>QR-CLEAN</h1>
+        <p>Staff Dashboard</p>
+      </div>
+      <button class="logout" id="logoutBtn">Log Out</button>
+    </header>
+
+    <div id="message" role="status" aria-live="polite">
+      Checking staff access...
+    </div>
+
+    <section id="dashboard" class="hidden">
+      <nav class="tabs">
+        <button class="primary" id="binsTab">Bin Management</button>
+        <button class="secondary" id="reportsTab">Garbage Reports</button>
+      </nav>
+
+      <section id="binsSection">
+        <div class="panel">
+          <h2>Add New Bin</h2>
+          <p class="muted">
+            Enter a unique ID, bin name and location.
+            The QR code will use this bin's reporting link.
+          </p>
+
+          <form id="binForm">
+            <label for="newBinId">Bin ID</label>
+            <input
+              id="newBinId"
+              placeholder="Example: BIN-004"
+              pattern="[A-Za-z0-9_-]+"
+              required
+            >
+
+            <label for="newBinName">Bin Name</label>
+            <input
+              id="newBinName"
+              placeholder="Example: Main Gate Dustbin"
+              maxlength="100"
+              required
+            >
+
+            <label for="newBinLocation">Location</label>
+            <input
+              id="newBinLocation"
+              placeholder="Example: Main Gate"
+              maxlength="200"
+              required
+            >
+
+            <button class="primary full-button" id="addBinBtn" type="submit">
+              Save New Bin
+            </button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h2>Registered Bins</h2>
+          <button class="secondary" id="refreshBinsBtn">
+            Refresh Bins
+          </button>
+          <p id="binCount" class="muted">Loading bins...</p>
+          <div id="binsList"></div>
+        </div>
+      </section>
+
+      <section id="reportsSection" class="hidden">
+        <div class="panel">
+          <h2>Garbage Reports</h2>
+          <p id="count">Loading reports...</p>
+          <button class="secondary" id="refreshBtn">Refresh Reports</button>
+        </div>
+        <div id="reports"></div>
+      </section>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initializeApp }
+      from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      collection,
+      getDocs,
+      query,
+      orderBy,
+      setDoc,
+      updateDoc,
+      runTransaction,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+    // Keep this configuration consistent with login.html.
+    const firebaseConfig = {
+      apiKey: "AIzaSyCCorpTfMlP2VTtQ3_rsZxxG6iEM4td-Wo",
+      authDomain: "qr-clean.firebaseapp.com",
+      projectId: "qr-clean",
+      storageBucket: "qr-clean.firebasestorage.app",
+      messagingSenderId: "853415187571",
+      appId: "1:853415187571:web:86b76fe67f51bb7a4d4606",
+      measurementId: "G-XFK1JNJBTR"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const message = document.getElementById("message");
+    const dashboard = document.getElementById("dashboard");
+    const binsSection = document.getElementById("binsSection");
+    const reportsSection = document.getElementById("reportsSection");
+    const binsList = document.getElementById("binsList");
+    const binCount = document.getElementById("binCount");
+    const reportsDiv = document.getElementById("reports");
+    const count = document.getElementById("count");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const binForm = document.getElementById("binForm");
+    const addBinBtn = document.getElementById("addBinBtn");
+
+    let currentUser = null;
+
+    function showMessage(text, type = "") {
+      message.textContent = text;
+      message.className = type;
+    }
+
+    function addText(parent, tag, text, className = "") {
+      const element = document.createElement(tag);
+      element.textContent = text;
+      if (className) element.className = className;
+      parent.appendChild(element);
+      return element;
+    }
+
+    function reportingLink(binId) {
+      const url = new URL("report.html", window.location.href);
+      url.searchParams.set("bin", binId);
+      return url.href;
+    }
+
+    function qrImageUrl(binId) {
+      const target = reportingLink(binId);
+      return "https://api.qrserver.com/v1/create-qr-code/?size=240x240&data="
+        + encodeURIComponent(target);
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.replace("login.html");
+        return;
+      }
+
+      try {
+        const staffSnap = await getDoc(doc(db, "staff", user.uid));
+
+        if (!staffSnap.exists() || staffSnap.data().role !== "staff") {
+          showMessage("Access denied. Staff account required.", "error");
+          await signOut(auth);
+          return;
+        }
+
+        currentUser = user;
+        dashboard.classList.remove("hidden");
+        showMessage("Staff access verified.", "success");
+
+        await Promise.all([loadBins(), loadReports()]);
+      } catch (error) {
+        console.error(error);
+        showMessage(
+          "Could not verify staff access. Check Firebase configuration and Firestore rules.",
+          "error"
+        );
+      }
+    });
+
+    // ---------------- BIN MANAGEMENT ----------------
+
+    async function loadBins() {
+      if (!currentUser) return;
+
+      binsList.replaceChildren();
+      binCount.textContent = "Loading bins...";
+
+      try {
+        const snapshot = await getDocs(collection(db, "bins"));
+        const bins = [];
+
+        snapshot.forEach((binDoc) => {
+          bins.push({ id: binDoc.id, ...binDoc.data() });
+        });
+
+        bins.sort((a, b) => a.id.localeCompare(b.id));
+        binCount.textContent = "Registered bins: " + bins.length;
+
+        if (bins.length === 0) {
+          addText(binsList, "p", "No bins registered yet.");
+          return;
+        }
+
+        for (const bin of bins) {
+          const card = document.createElement("article");
+          card.className = "bin-card";
+
+          addText(card, "h3", bin.id);
+          addText(
+            card,
+            "p",
+            bin.active === true ? "Status: Active" : "Status: Inactive",
+            bin.active === true ? "success" : "inactive"
+          );
+
+          const nameLabel = addText(card, "label", "Bin Name");
+          const nameInput = document.createElement("input");
+          nameInput.value = bin.name || "";
+          nameInput.maxLength = 100;
+          nameInput.required = true;
+          nameLabel.appendChild(nameInput);
+
+          const locationLabel = addText(card, "label", "Location");
+          const locationInput = document.createElement("input");
+          locationInput.value = bin.location || "";
+          locationInput.maxLength = 200;
+          locationInput.required = true;
+          locationLabel.appendChild(locationInput);
+
+          const activeLabel = document.createElement("label");
+          activeLabel.style.margin = "10px 0";
+          const activeInput = document.createElement("input");
+          activeInput.type = "checkbox";
+          activeInput.checked = bin.active === true;
+          activeInput.style.width = "auto";
+          activeInput.style.marginRight = "8px";
+          activeLabel.appendChild(activeInput);
+          activeLabel.appendChild(document.createTextNode("Bin is active"));
+          card.appendChild(activeLabel);
+
+          const actions = document.createElement("div");
+          actions.className = "bin-actions";
+
+          const saveBtn = document.createElement("button");
+          saveBtn.className = "primary";
+          saveBtn.textContent = "Save Changes";
+
+          saveBtn.addEventListener("click", async () => {
+            const name = nameInput.value.trim();
+            const location = locationInput.value.trim();
+
+            if (!name || !location) {
+              showMessage("Enter both the bin name and location.", "error");
+              return;
+            }
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = "Saving...";
+
+            try {
+              await updateDoc(doc(db, "bins", bin.id), {
+                name,
+                location,
+                active: activeInput.checked
+              });
+
+              showMessage(bin.id + " updated successfully.", "success");
+              await loadBins();
+            } catch (error) {
+              console.error(error);
+              showMessage(
+                "Could not update the bin. Check staff permissions and Firestore rules.",
+                "error"
+              );
+              saveBtn.disabled = false;
+              saveBtn.textContent = "Save Changes";
+            }
+          });
+
+          actions.appendChild(saveBtn);
+          card.appendChild(actions);
+
+          const qrArea = document.createElement("div");
+          qrArea.className = "qr-area";
+          addText(qrArea, "h4", "Bin QR Code");
+
+          if (bin.active === true) {
+            const qr = document.createElement("img");
+            qr.className = "qr";
+            qr.alt = "QR code for " + bin.id;
+            qr.loading = "lazy";
+            qr.src = qrImageUrl(bin.id);
+            qrArea.appendChild(qr);
+
+            const link = document.createElement("a");
+            link.href = reportingLink(bin.id);
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = "Open reporting page";
+            qrArea.appendChild(link);
+
+            const qrActions = document.createElement("div");
+            qrActions.className = "bin-actions";
+
+            const openQr = document.createElement("button");
+            openQr.className = "secondary";
+            openQr.textContent = "Open QR Image";
+            openQr.addEventListener("click", () => {
+              window.open(qrImageUrl(bin.id), "_blank", "noopener");
+            });
+            qrActions.appendChild(openQr);
+
+            const copyLink = document.createElement("button");
+            copyLink.className = "secondary";
+            copyLink.textContent = "Copy Reporting Link";
+            copyLink.addEventListener("click", async () => {
+              try {
+                await navigator.clipboard.writeText(reportingLink(bin.id));
+                showMessage("Reporting link copied for " + bin.id, "success");
+              } catch (error) {
+                window.prompt("Copy this reporting link:", reportingLink(bin.id));
+              }
+            });
+            qrActions.appendChild(copyLink);
+            qrArea.appendChild(qrActions);
+          } else {
+            addText(
+              qrArea,
+              "p",
+              "This bin is inactive. Activate it to show its reporting QR code."
+            );
+          }
+
+          card.appendChild(qrArea);
+          binsList.appendChild(card);
+        }
+      } catch (error) {
+        console.error(error);
+        binCount.textContent = "";
+        showMessage(
+          "Could not load bins. Check your staff permissions and Firestore rules.",
+          "error"
+        );
+      }
+    }
+
+    binForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!currentUser) return;
+
+      const binId = document.getElementById("newBinId")
+        .value.trim().toUpperCase();
+      const name = document.getElementById("newBinName").value.trim();
+      const location = document.getElementById("newBinLocation")
+        .value.trim();
+
+      if (!/^[A-Z0-9_-]+$/.test(binId) || !name || !location) {
+        showMessage("Enter a valid unique ID, name and location.", "error");
+        return;
+      }
+
+      addBinBtn.disabled = true;
+      addBinBtn.textContent = "Saving...";
+
+      try {
+        const binRef = doc(db, "bins", binId);
+        const existing = await getDoc(binRef);
+
+        if (existing.exists()) {
+          showMessage(
+            "That Bin ID already exists. Use its card below to edit it.",
+            "error"
+          );
+          return;
+        }
+
+        await setDoc(binRef, {
+          name,
+          location,
+          active: true
+        });
+
+        binForm.reset();
+        showMessage(
+          binId + " registered successfully. Its QR code is ready below.",
+          "success"
+        );
+        await loadBins();
+      } catch (error) {
+        console.error(error);
+        showMessage(
+          "Could not register the bin. Check your staff permissions and Firestore rules.",
+          "error"
+        );
+      } finally {
+        addBinBtn.disabled = false;
+        addBinBtn.textContent = "Save New Bin";
+      }
+    });
+
+    document.getElementById("refreshBinsBtn")
+      .addEventListener("click", loadBins);
+
+    // ---------------- REPORTS ----------------
+
+    async function loadReports() {
+      if (!currentUser) return;
+
+      reportsDiv.replaceChildren();
+      count.textContent = "Loading reports...";
+
+      try {
+        const reportsQuery = query(
+          collection(db, "reports"),
+          orderBy("createdAt", "desc")
+        );
+
+        const snapshot = await getDocs(reportsQuery);
+        count.textContent = "Total reports: " + snapshot.size;
+
+        if (snapshot.empty) {
+          addText(reportsDiv, "p", "No reports have been submitted yet.");
+          return;
+        }
+
+        snapshot.forEach((reportDoc) => {
+          const data = reportDoc.data();
+          const card = document.createElement("article");
+          card.className = "report";
+
+          addText(card, "h3", data.binLocation || "Unknown location");
+          addText(card, "p", "Report ID: " + reportDoc.id);
+          addText(card, "p", "Bin ID: " + (data.binId || "Unknown"));
+          addText(card, "p", "Issue: " + (data.issue || "Not specified"));
+          addText(card, "p", "Details: " + (data.details || "None"));
+
+          if (data.photoUrl) {
+            addText(card, "p", "Photo proof:");
+            const photo = document.createElement("img");
+            photo.src = data.photoUrl;
+            photo.alt = "Photo proof for " + (data.binId || "dustbin");
+            photo.className = "proof";
+            photo.loading = "lazy";
+            card.appendChild(photo);
+          } else {
+            addText(card, "p", "Photo proof: No photo uploaded");
+          }
+
+          addText(
+            card,
+            "p",
+            "Current status: " + (data.status || "Pending"),
+            "status"
+          );
+
+          if (data.createdAt && data.createdAt.toDate) {
+            addText(
+              card,
+              "p",
+              "Submitted: " + data.createdAt.toDate().toLocaleString()
+            );
+          }
+
+          const label = addText(card, "label", "Update status");
+          const select = document.createElement("select");
+          select.setAttribute("aria-label", "Update report status");
+          label.appendChild(select);
+
+          ["Pending", "In Progress", "Resolved"].forEach((status) => {
+            const option = document.createElement("option");
+            option.value = status;
+            option.textContent = status;
+            select.appendChild(option);
+          });
+
+          select.value = ["Pending", "In Progress", "Resolved"]
+            .includes(data.status) ? data.status : "Pending";
+
+          const saveBtn = document.createElement("button");
+          saveBtn.className = "primary full-button";
+          saveBtn.textContent = "Save Status";
+
+          saveBtn.addEventListener("click", async () => {
+            if (!currentUser) return;
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = "Saving...";
+
+            try {
+              const reportRef = doc(db, "reports", reportDoc.id);
+              const stateRef = doc(db, "binReportState", data.binId);
+
+              await runTransaction(db, async (transaction) => {
+                const reportSnap = await transaction.get(reportRef);
+                const stateSnap = await transaction.get(stateRef);
+
+                if (!reportSnap.exists()) {
+                  throw new Error("Report not found.");
+                }
+
+                if (
+                  !stateSnap.exists() ||
+                  stateSnap.data().activeReportId !== reportDoc.id
+                ) {
+                  throw new Error(
+                    "Report state mismatch. This may be an older report."
+                  );
+                }
+
+                if (select.value === "Resolved") {
+                  transaction.delete(reportRef);
+                  transaction.update(stateRef, {
+                    status: "Resolved",
+                    updatedAt: serverTimestamp()
+                  });
+                } else {
+                  transaction.update(reportRef, {
+                    status: select.value,
+                    updatedAt: serverTimestamp()
+                  });
+
+                  transaction.update(stateRef, {
+                    status: select.value,
+                    updatedAt: serverTimestamp()
+                  });
+                }
+              });
+
+              showMessage("Report status updated successfully.", "success");
+              await loadReports();
+            } catch (error) {
+              console.error(error);
+              showMessage(
+                error.message || "Status update failed. Check staff permissions and Firestore rules.",
+                "error"
+              );
+              saveBtn.disabled = false;
+              saveBtn.textContent = "Save Status";
+            }
+          });
+
+          card.appendChild(saveBtn);
+          reportsDiv.appendChild(card);
+        });
+      } catch (error) {
+        console.error(error);
+        count.textContent = "";
+        showMessage(
+          "Could not load reports. Check your staff document and Firestore rules.",
+          "error"
+        );
+      }
+    }
+
+    document.getElementById("refreshBtn")
+      .addEventListener("click", loadReports);
+
+    // ---------------- NAVIGATION ----------------
+
+    document.getElementById("binsTab").addEventListener("click", () => {
+      binsSection.classList.remove("hidden");
+      reportsSection.classList.add("hidden");
+    });
+
+    document.getElementById("reportsTab").addEventListener("click", () => {
+      reportsSection.classList.remove("hidden");
+      binsSection.classList.add("hidden");
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      logoutBtn.disabled = true;
+
+      try {
+        await signOut(auth);
+        window.location.replace("login.html");
+      } catch (error) {
+        console.error(error);
+        showMessage("Logout failed. Please try again.", "error");
+        logoutBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
