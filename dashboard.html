@@ -169,10 +169,16 @@
     </div>
 
     <section id="dashboard" class="hidden">
-      <nav class="tabs">
-        <button class="primary" id="binsTab">Bin Management</button>
-        <button class="secondary" id="reportsTab">Garbage Reports</button>
-      </nav>
+     
+<nav class="tabs">
+  <button class="primary" id="binsTab">Bin Management</button>
+  <button class="secondary" id="reportsTab">Garbage Reports</button>
+  <button class="secondary staff-tab" id="staffTab"
+    aria-label="Staff" title="Staff">
+    <span class="staff-icon">👤<span class="plus-icon">+</span></span>
+  </button>
+</nav>
+
 
       <section id="binsSection">
         <div class="panel">
@@ -222,6 +228,38 @@
           <div id="binsList"></div>
         </div>
       </section>
+      <section id="staffSection" class="hidden">
+
+        <div class="panel">
+          <h2>Staff Management</h2>
+          <p class="muted">
+            Create a login for a new authorized staff member.
+          </p>
+
+          <form id="staffForm">
+            <label for="staffEmail">Staff Email</label>
+            <input
+              id="staffEmail"
+              type="email"
+              placeholder="Enter staff email"
+              required
+            >
+
+            <label for="staffPassword">Temporary Password</label>
+            <input
+              id="staffPassword"
+              type="password"
+              placeholder="At least 6 characters"
+              minlength="6"
+              required
+            >
+
+            <button type="submit">Create Staff Account</button>
+            <p id="staffMessage" class="muted"></p>
+          </form>
+        </div>
+        </section>
+
 
       <section id="reportsSection" class="hidden">
         <div class="panel">
@@ -238,11 +276,12 @@
     import { initializeApp }
       from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+  import {
+  getAuth,
+  onAuthStateChanged,
+  signOut,
+  createUserWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
     import {
       getFirestore,
@@ -271,11 +310,15 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const secondaryApp = initializeApp(firebaseConfig, "Secondary");
+const secondaryAuth = getAuth(secondaryApp);
+
     const db = getFirestore(app);
 
     const message = document.getElementById("message");
     const dashboard = document.getElementById("dashboard");
     const binsSection = document.getElementById("binsSection");
+    const staffSection = document.getElementById("staffSection");
     const reportsSection = document.getElementById("reportsSection");
     const binsList = document.getElementById("binsList");
     const binCount = document.getElementById("binCount");
@@ -721,14 +764,87 @@
 
     // ---------------- NAVIGATION ----------------
 
-    document.getElementById("binsTab").addEventListener("click", () => {
-      binsSection.classList.remove("hidden");
-      reportsSection.classList.add("hidden");
-    });
+    
+document.getElementById("binsTab").addEventListener("click", () => {
+  binsSection.classList.remove("hidden");
+  reportsSection.classList.add("hidden");
+  staffSection.classList.add("hidden");
+});
+
+document.getElementById("reportsTab").addEventListener("click", () => {
+  binsSection.classList.add("hidden");
+  reportsSection.classList.remove("hidden");
+  staffSection.classList.add("hidden");
+});
+
+document.getElementById("staffTab").addEventListener("click", () => {
+  binsSection.classList.add("hidden");
+  reportsSection.classList.add("hidden");
+  staffSection.classList.remove("hidden");
+});
+
 
     document.getElementById("reportsTab").addEventListener("click", () => {
       reportsSection.classList.remove("hidden");
       binsSection.classList.add("hidden");
+    });
+
+    // ---------------- STAFF MANAGEMENT ----------------
+
+    const staffForm = document.getElementById("staffForm");
+    const staffMessage = document.getElementById("staffMessage");
+
+    staffForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const email = document.getElementById("staffEmail").value.trim();
+      const password = document.getElementById("staffPassword").value;
+      const submitButton = staffForm.querySelector(
+        'button[type="submit"]'
+      );
+
+      submitButton.disabled = true;
+      staffMessage.textContent = "Creating staff account...";
+
+      try {
+        if (!currentUser) {
+          throw new Error("Please sign in with an authorized staff account.");
+        }
+
+        const credential = await createUserWithEmailAndPassword(
+          secondaryAuth,
+          email,
+          password
+        );
+
+        await setDoc(doc(db, "staff", credential.user.uid), {
+          role: "staff",
+          createdAt: serverTimestamp(),
+          createdBy: currentUser.uid
+        });
+
+        await signOut(secondaryAuth);
+
+        staffMessage.textContent =
+          "Staff account created successfully!";
+
+        staffForm.reset();
+      } catch (error) {
+        console.error("Staff creation error:", error);
+
+        staffMessage.textContent =
+          "Could not complete staff creation: " + error.message;
+
+        if (secondaryAuth.currentUser) {
+          try {
+            await signOut(secondaryAuth);
+          } catch (signOutError) {
+            console.error(signOutError);
+          }
+        }
+      } finally {
+        submitButton.disabled = false;
+      }
     });
 
     logoutBtn.addEventListener("click", async () => {

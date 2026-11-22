@@ -1,0 +1,179 @@
+:root {
+  color-scheme: light;
+  --page: #f3f6f4;
+  --surface: #ffffff;
+  --surface-soft: #eaf3ed;
+  --ink: #1d3328;
+  --muted: #607268;
+  --primary: #176b4b;
+  --primary-dark: #124d38;
+  --primary-hover: #10583e;
+  --border: #d7e3db;
+  --shadow: 0 12px 32px rgba(20, 54, 38, 0.1);
+  --success: #14734a;
+  --danger: #b42318;
+}
+
+* {
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+body {
+  background: var(--page);
+  color: var(--ink);
+}
+
+header,
+nav,
+footer {
+  background: var(--primary-dark);
+  color: #ffffff;
+}
+
+header h1,
+header h2,
+header p,
+footer p {
+  color: inherit;
+}
+
+header p {
+  opacity: 0.84;
+}
+
+nav a {
+  color: #ffffff;
+}
+
+nav a:hover,
+a:hover {
+  color: var(--primary);
+}
+
+nav a:hover {
+  color: #bfe6ce;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--primary-dark);
+}
+
+p,
+.subtitle,
+.note,
+.about,
+.hero p,
+.card p,
+.report p {
+  color: var(--muted);
+}
+
+.hero {
+  background: linear-gradient(135deg, var(--surface-soft), #ffffff);
+}
+
+.hero h2,
+section h2,
+.card h3,
+.bin-box h2,
+.report h3 {
+  color: var(--primary-dark);
+}
+
+.card,
+.container,
+.login-box,
+.summary,
+.report {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.bin,
+.bin-box,
+.report-box {
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+}
+
+button,
+.btn,
+.save {
+  background: var(--primary);
+  color: #ffffff;
+  transition: background-color 160ms ease, box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+button:hover:not(:disabled),
+.btn:hover,
+.save:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.btn.secondary,
+.logout,
+.refresh {
+  background: var(--surface);
+  color: var(--primary-dark);
+  border: 1px solid var(--border);
+}
+
+.btn.secondary:hover,
+.logout:hover:not(:disabled),
+.refresh:hover:not(:disabled) {
+  background: var(--surface-soft);
+  color: var(--primary-dark);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+input,
+select,
+textarea {
+  color: var(--ink);
+  border-color: var(--border);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary);
+  outline: 3px solid rgba(23, 107, 75, 0.14);
+}
+
+a {
+  color: var(--primary);
+}
+
+.success {
+  color: var(--success);
+}
+
+.error {
+  color: var(--danger);
+}
+
+.message.error {
+  background: #fff0ef;
+}
+
+.info {
+  background: #fff6df;
+  color: #76550a;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(23, 107, 75, 0.35);
+  outline-offset: 2px;
+}
