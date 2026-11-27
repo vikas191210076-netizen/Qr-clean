@@ -171,7 +171,7 @@
     const db = getFirestore(app);
 
     const params = new URLSearchParams(location.search);
-   const binId = (params.get("binId") || "").trim().toUpperCase();
+  const binId = (params.get("binId") || params.get("bin") || "").trim().toUpperCase();
 
     const binInfo = document.getElementById("binInfo");
     const form = document.getElementById("reportForm");
