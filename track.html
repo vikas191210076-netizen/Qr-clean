@@ -1,0 +1,271 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track My Report | QR-CLEAN</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: #f4f8f4;
+      color: #20352a;
+    }
+
+    nav {
+      background: #104629;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 22px;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 55px auto;
+      padding: 28px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 5px 20px #00000012;
+    }
+
+    h1 {
+      text-align: center;
+      color: #155d35;
+    }
+
+    .description {
+      text-align: center;
+      line-height: 1.6;
+      color: #607066;
+    }
+
+    label {
+      display: block;
+      margin: 24px 0 8px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #c8d8cc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px;
+      background: #188348;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #105c32;
+    }
+
+    #result {
+      margin-top: 22px;
+      padding: 15px;
+      background: #eef7f0;
+      border-radius: 8px;
+      line-height: 1.7;
+      overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 540px) {
+      .container {
+        margin: 25px 14px;
+        padding: 22px;
+      }
+    }
+  </style>
+
+<link rel="stylesheet" href="theme.css">
+</head>
+
+<body>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="index.html#about">About</a>
+    <a href="track.html">Track My Report</a>
+    <a href="login.html">Staff Login</a>
+  </nav>
+
+  <main class="container">
+    <h1>Track My Report</h1>
+
+    <p class="description">
+      Enter the unique Report ID you received after submitting your report.
+    </p>
+
+    <label for="reportId">Report ID</label>
+
+    <input
+      id="reportId"
+      type="text"
+      placeholder="Paste your Report ID here"
+      autocomplete="off"
+    >
+
+    <button id="trackBtn" type="button">Check Status</button>
+
+  
+
+<div id="result" role="status" aria-live="polite">
+  Your report status will appear here.
+</div>
+</main>
+
+
+ 
+<script type="module">
+  import { initializeApp } from
+    "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+
+ 
+import {
+  getFirestore,
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyCCorpTfMlP2VTtQ3_rsZxxG6iEM4td-Wo",
+  authDomain: "qr-clean.firebaseapp.com",
+  projectId: "qr-clean",
+  storageBucket: "qr-clean.firebasestorage.app",
+  messagingSenderId: "853415187571",
+  appId: "1:853415187571:web:86b76fe67f51bb7a4d4606",
+  measurementId: "G-XFK1JNJBTR"
+};
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const reportIdInput = document.getElementById("reportId");
+  const trackBtn = document.getElementById("trackBtn");
+  const result = document.getElementById("result");
+
+  
+function showResult(message) {
+  result.textContent = message;
+}
+
+
+  trackBtn.addEventListener("click", async () => {
+    const reportId = reportIdInput.value.trim();
+
+    if (!reportId) {
+      showResult("Please enter your Report ID.");
+      
+      return;
+    }
+
+    trackBtn.disabled = true;
+    showResult("Checking your report status...");
+
+  
+try {
+ 
+
+const referenceCode = reportId.toUpperCase();
+
+if (!/^[A-Z0-9]{4}$/.test(referenceCode)) {
+  showResult("Please enter your 4-character Reference ID.");
+  return;
+}
+
+const reportRef = doc(
+  db,
+  "publicReportStatus",
+  referenceCode
+);
+
+const reportSnap = await getDoc(reportRef);
+
+if (!reportSnap.exists()) {
+  showResult(
+    "Report not found. Please check your 4-character Reference ID."
+  );
+  return;
+}
+
+const report = reportSnap.data();
+
+const allowedStatuses = [
+  "Pending",
+  "In Progress",
+  "Resolved"
+];
+
+if (
+  report.shortCode !== referenceCode ||
+  !allowedStatuses.includes(report.status)
+) {
+  showResult("The report tracking information is invalid.");
+  return;
+}
+
+
+ 
+result.innerHTML = `
+  <div class="tracking-details">
+    <h2>Report Tracking Details</h2>
+
+    <p>
+      <strong>Reference ID:</strong><br>
+     <span class="reference-value">${report.shortCode}</span>
+    </p>
+
+    <p>
+      <strong>Status:</strong><br>
+      <span class="status-value">${report.status}</span>
+    </p>
+
+    <div class="thank-you-message">
+      <p>Thank you for reporting!</p>
+      <p>Have a good day 😊</p>
+    </div>
+  </div>
+`;
+
+
+} catch (error) {
+  console.error("Tracking error:", error);
+
+  showResult(
+    "Unable to check the report. Please try again later."
+  );
+
+} finally {
+  trackBtn.disabled = false;
+}
+
+  });
+</script>
+
+</body>
+</html>

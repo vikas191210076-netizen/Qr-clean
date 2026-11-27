@@ -177,3 +177,53 @@ textarea:focus-visible {
   outline: 3px solid rgba(23, 107, 75, 0.35);
   outline-offset: 2px;
 }
+
+.tracking-details {
+  text-align: center;
+  padding: 28px 20px;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.10);
+}
+
+.tracking-details h2 {
+  font-size: 28px;
+  margin-bottom: 24px;
+}
+
+.tracking-details p {
+  font-size: 20px;
+  line-height: 1.7;
+}
+
+.reference-value {
+  font-size: 22px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.status-value {
+  display: inline-block;
+  padding: 8px 20px;
+  border-radius: 20px;
+  background: #fff3cd;
+  color: #805b00;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.thank-you-message {
+  margin-top: 28px;
+  padding: 22px 12px;
+  border-radius: 14px;
+  background: #e8f7ee;
+  color: #176b3a;
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.thank-you-message p {
+  margin: 4px 0;
+  font-size: inherit;
+}

@@ -291,9 +291,11 @@
       getDocs,
       query,
       orderBy,
+
       setDoc,
       updateDoc,
       runTransaction,
+       writeBatch,
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
@@ -687,64 +689,104 @@ const secondaryAuth = getAuth(secondaryApp);
           saveBtn.className = "primary full-button";
           saveBtn.textContent = "Save Status";
 
-          saveBtn.addEventListener("click", async () => {
-            if (!currentUser) return;
+        
 
-            saveBtn.disabled = true;
-            saveBtn.textContent = "Saving...";
+saveBtn.addEventListener("click", async () => {
+  if (!currentUser) return;
 
-            try {
-              const reportRef = doc(db, "reports", reportDoc.id);
-              const stateRef = doc(db, "binReportState", data.binId);
+  saveBtn.disabled = true;
+  saveBtn.textContent = "Saving...";
 
-              await runTransaction(db, async (transaction) => {
-                const reportSnap = await transaction.get(reportRef);
-                const stateSnap = await transaction.get(stateRef);
+  try {
+    const reportRef = doc(db, "reports", reportDoc.id);
+    const stateRef = doc(db, "binReportState", data.binId);
+   const publicStatusRef = doc(
+  db,
+  "publicReportStatus",
+  data.shortCode
+);
 
-                if (!reportSnap.exists()) {
-                  throw new Error("Report not found.");
-                }
+    await runTransaction(db, async (transaction) => {
+      // Read all documents before making any changes.
+      const reportSnap = await transaction.get(reportRef);
+      const stateSnap = await transaction.get(stateRef);
+      const publicStatusSnap =
+        await transaction.get(publicStatusRef);
 
-                if (
-                  !stateSnap.exists() ||
-                  stateSnap.data().activeReportId !== reportDoc.id
-                ) {
-                  throw new Error(
-                    "Report state mismatch. This may be an older report."
-                  );
-                }
+      if (!reportSnap.exists()) {
+        throw new Error("Report not found.");
+      }
 
-                if (select.value === "Resolved") {
-                  transaction.delete(reportRef);
-                  transaction.update(stateRef, {
-                    status: "Resolved",
-                    updatedAt: serverTimestamp()
-                  });
-                } else {
-                  transaction.update(reportRef, {
-                    status: select.value,
-                    updatedAt: serverTimestamp()
-                  });
+      if (
+        !stateSnap.exists() ||
+        stateSnap.data().activeReportId !== reportDoc.id
+      ) {
+        throw new Error(
+          "Report state mismatch. This may be an older report."
+        );
+      }
 
-                  transaction.update(stateRef, {
-                    status: select.value,
-                    updatedAt: serverTimestamp()
-                  });
-                }
-              });
+    if (!publicStatusSnap.exists()) {
+  throw new Error(
+    "Public tracking record is missing. Please repair the tracking setup before resolving this report."
+  );
+}
+      const newStatus = select.value;
 
-              showMessage("Report status updated successfully.", "success");
-              await loadReports();
-            } catch (error) {
-              console.error(error);
-              showMessage(
-                error.message || "Status update failed. Check staff permissions and Firestore rules.",
-                "error"
-              );
-              saveBtn.disabled = false;
-              saveBtn.textContent = "Save Status";
-            }
-          });
+      if (
+        !["Pending", "In Progress", "Resolved"].includes(newStatus)
+      ) {
+        throw new Error("Invalid report status.");
+      }
+
+     if (
+  publicStatusSnap.data().reportId !== reportDoc.id ||
+  publicStatusSnap.data().binId !== data.binId ||
+  publicStatusSnap.data().shortCode !== data.shortCode
+) {
+  throw new Error("Tracking record does not match this report.");
+}
+      // Keep the original tracking record and its createdAt.
+      transaction.update(publicStatusRef, {
+        status: newStatus,
+        updatedAt: serverTimestamp()
+      });
+
+      if (newStatus === "Resolved") {
+        transaction.delete(reportRef);
+
+        transaction.update(stateRef, {
+          status: "Resolved",
+          updatedAt: serverTimestamp()
+        });
+      } else {
+        transaction.update(reportRef, {
+          status: newStatus,
+          updatedAt: serverTimestamp()
+        });
+
+        transaction.update(stateRef, {
+          status: newStatus,
+          updatedAt: serverTimestamp()
+        });
+      }
+    });
+
+    showMessage("Report status updated successfully.", "success");
+    await loadReports();
+
+  } catch (error) {
+    console.error(error);
+    showMessage(
+      error.message ||
+        "Status update failed. Check Firestore permissions.",
+      "error"
+    );
+
+    saveBtn.disabled = false;
+    saveBtn.textContent = "Save Status";
+  }
+});
 
           card.appendChild(saveBtn);
           reportsDiv.appendChild(card);

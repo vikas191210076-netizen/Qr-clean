@@ -1,4 +1,4 @@
-
+<!-- QR-CLEAN LOCAL TEST -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -61,11 +61,18 @@
 
     button:disabled { opacity: .6; cursor: wait; }
 
-    #message {
-      margin-top: 16px;
-      line-height: 1.5;
-      overflow-wrap: anywhere;
-    }
+  
+#message {
+  margin-top: 20px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  font-size: 20px;
+  font-weight: 700;
+  padding: 14px;
+  border-radius: 10px;
+  background: #fff4e5;
+}
+
 
     #preview {
       display: none;
@@ -123,10 +130,14 @@
 
       <img id="preview" alt="Selected photo preview">
 
-      <button id="submitBtn" type="submit">Submit Report</button>
-      <div id="message" role="status" aria-live="polite"></div>
-    </form>
-  </main>
+     
+<button id="submitBtn" type="submit">Submit Report</button>
+</form>
+
+<div id="message" role="status" aria-live="polite"></div>
+
+</main>
+
 
   <script type="module">
     import { initializeApp } from
@@ -141,7 +152,6 @@
   serverTimestamp,
   runTransaction
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-      "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
     // Replace these placeholders with your existing Firebase config.
   const firebaseConfig = {
@@ -161,7 +171,7 @@
     const db = getFirestore(app);
 
     const params = new URLSearchParams(location.search);
-    const binId = (params.get("bin") || "").trim().toUpperCase();
+   const binId = (params.get("binId") || "").trim().toUpperCase();
 
     const binInfo = document.getElementById("binInfo");
     const form = document.getElementById("reportForm");
@@ -177,38 +187,112 @@
       message.style.color = success ? "#137547" : "#b42318";
     }
 
-    async function loadBin() {
-      if (!/^BIN-\d{3}$/.test(binId)) {
-        binInfo.textContent = "Invalid QR code. Please scan a registered bin.";
-        form.hidden = true;
-        return;
-      }
 
-      try {
-        const snap = await getDoc(doc(db, "bins", binId));
+async function checkActiveReport() {
+  const stateRef = doc(db, "binReportState", binId);
 
-        if (!snap.exists() || snap.data().active !== true) {
-          binInfo.textContent = "This dustbin is not registered or is inactive.";
-          form.hidden = true;
-          return;
-        }
+  try {
+    const stateSnap = await getDoc(stateRef);
 
-        binData = snap.data();
-
-        if (typeof binData.location !== "string" ||
-            typeof binData.name !== "string") {
-          throw new Error("Bin details are incomplete.");
-        }
-
-        binInfo.textContent =
-          "Dustbin: " + binData.name + " | Location: " + binData.location;
-      } catch (error) {
-        console.error(error);
-        binInfo.textContent =
-          "Could not verify this dustbin. Please try again later.";
-        form.hidden = true;
-      }
+    if (!stateSnap.exists()) {
+      form.hidden = false;
+      showMessage("");
+      return;
     }
+
+    const state = stateSnap.data();
+    console.log("Current bin report state:", state);
+
+    if (["Pending", "In Progress"].includes(state.status)) {
+      console.log("Blocking condition:", ["Pending", "In Progress"].includes(state.status));
+      console.log("Status being checked:", binId, state.status);
+      form.hidden = true;
+      console.log("Active report found. Form hidden:", form.hidden);
+
+      binInfo.textContent =
+        "Dustbin: " + binData.name +
+        " | Location: " + binData.location;
+
+      showMessage(
+        "A report already exists for this dustbin. Current status: " +
+        state.status
+      );
+      console.log("Message element text:", message.textContent);
+console.log("Message element visible:", message.getClientRects().length > 0);
+      return;
+    }
+
+    form.hidden = false;
+    showMessage("");
+
+  } catch (error) {
+    console.error("Active report check failed:", error);
+    form.hidden = true;
+
+    showMessage(
+      "Could not verify the report status. Please try again later."
+    );
+  }
+}
+
+
+  
+async function loadBin() {
+  if (!/^BIN-\d{3}$/.test(binId)) {
+    binInfo.textContent =
+      "Invalid QR code. Use a registered bin ID.";
+    form.hidden = true;
+    return;
+  }
+
+  binInfo.textContent = "Checking registered dustbin...";
+
+  try {
+    console.log("Checking bin:", binId);
+
+    const snap = await getDoc(doc(db, "bins", binId));
+
+    console.log("Bin document exists:", snap.exists());
+
+    if (!snap.exists() || snap.data().active !== true) {
+      binInfo.textContent =
+        "This dustbin is not registered or is inactive.";
+      form.hidden = true;
+      return;
+    }
+
+    binData = snap.data();
+
+    if (
+      typeof binData.location !== "string" ||
+      typeof binData.name !== "string"
+    ) {
+      throw new Error("Bin details are incomplete.");
+    }
+
+    binInfo.textContent =
+      "Dustbin: " + binData.name +
+      " | Location: " + binData.location;
+
+    console.log("Bin verified. Checking active report...");
+
+    await checkActiveReport();
+
+    console.log("Active report check completed.");
+
+  } catch (error) {
+    console.error("Report page check failed:", error);
+
+    binInfo.textContent =
+      "Verification failed: " +
+      (error.code || "Unknown error") +
+      " — " +
+      (error.message || "No error details");
+
+    form.hidden = true;
+  }
+}
+
 
     photoInput.addEventListener("change", () => {
       const file = photoInput.files[0];
@@ -288,30 +372,54 @@
       submitBtn.disabled = true;
       showMessage("Submitting your report...");
 
-      try {
-        let photoUrl = null;
+    
+try {
+  let photoUrl = null;
 
-        if (file) {
-          showMessage("Uploading photo...");
-          photoUrl = await uploadPhoto(file);
-        }
+  if (file) {
+    showMessage("Uploading photo...");
+    photoUrl = await uploadPhoto(file);
+  }
 
-        const report = {
-          binId,
-          binLocation: binData.location,
-          issue,
-          details,
-          status: "Pending",
-          createdAt: serverTimestamp()
-        };
+  const report = {
+    binId,
+    binLocation: binData.location,
+    issue,
+    details,
+    status: "Pending",
+    createdAt: serverTimestamp()
+  };
 
-        if (photoUrl) report.photoUrl = photoUrl;
+  if (photoUrl) report.photoUrl = photoUrl;
 
-       const reportRef = doc(collection(db, "reports"));
+ 
+
+const reportRef = doc(collection(db, "reports"));
 const stateRef = doc(db, "binReportState", binId);
+
+// Generate a 4-character tracking code.
+const characters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+let shortCode = "";
+
+for (let i = 0; i < 4; i++) {
+  shortCode += characters.charAt(
+    Math.floor(Math.random() * characters.length)
+  );
+}
+
+const publicStatusRef = doc(
+  db,
+  "publicReportStatus",
+  shortCode
+);
 
 await runTransaction(db, async (transaction) => {
   const stateSnap = await transaction.get(stateRef);
+  const codeSnap = await transaction.get(publicStatusRef);
+
+  if (codeSnap.exists()) {
+    throw new Error("CODE_COLLISION");
+  }
 
   if (
     stateSnap.exists() &&
@@ -320,37 +428,66 @@ await runTransaction(db, async (transaction) => {
     throw new Error("ALREADY_REPORTED");
   }
 
-  transaction.set(reportRef, report);
+  // Save the complete report.
+  transaction.set(reportRef, {
+    ...report,
+    shortCode: shortCode
+  });
 
+  // Save the current state for this bin.
   transaction.set(stateRef, {
     binId: binId,
     activeReportId: reportRef.id,
     status: "Pending",
     updatedAt: serverTimestamp()
   });
+
+  // Save public tracking data under the 4-character code.
+  transaction.set(publicStatusRef, {
+    reportId: reportRef.id,
+    shortCode: shortCode,
+    binId: binId,
+    status: "Pending",
+    createdAt: serverTimestamp()
+  });
 });
 
-        form.reset();
-        preview.style.display = "none";
-        preview.removeAttribute("src");
+  preview.style.display = "none";
+  preview.removeAttribute("src");
 
-        binInfo.textContent =
-          "Report submitted for " + binData.name + ".";
-        showMessage("Report submitted successfully. Thank you!", true);
-      } catch (error) {
-        console.error(error);
+  binInfo.textContent =
+    "Report submitted for " + binData.name + ".";
 
-if (error.message === "ALREADY_REPORTED") {
-  showMessage("Already reported! This dustbin has an active report.");
-} else {
-  showMessage(error.message || "Submission failed. Please try again.");
+  showMessage(
+   "Report submitted successfully! Your Report ID: " + shortCode,
+    true
+  );
+
+} catch (error) {
+  console.error(error);
+
+  if (error.message === "ALREADY_REPORTED") {
+    showMessage(
+      "Already reported! This dustbin has an active report."
+    );
+
+  } else if (error.message === "CODE_COLLISION") {
+    showMessage(
+      "Reference code already exists. Please submit again."
+    );
+
+  } else {
+    showMessage(
+      error.message || "Submission failed. Please try again."
+    );
+  }
+
+} finally {
+  submitBtn.disabled = false;
 }
-      } finally {
-        submitBtn.disabled = false;
-      }
-    });
+});
+loadBin();
 
-    await loadBin();
   </script>
 </body>
 </html>
